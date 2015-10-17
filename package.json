@@ -12,7 +12,8 @@
   "dependencies": {
     "prelude-extension": "0.0.5",
     "prelude-ls": "^1.1.1",
-    "react": ">=0.13.3 || ^0.14.0-beta"
+    "react": ">=0.13.3 || ^0.14.0-beta",
+    "react-motion-ui-pack": "https://github.com/chen-ye/react-motion-ui-pack-meteor/tarball/4daf23f6478a67fe903cbd7117e1110b2cd07b76"
   },
   "devDependencies": {
     "async-ls": "0.0.3",
