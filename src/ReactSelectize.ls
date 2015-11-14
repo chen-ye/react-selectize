@@ -2,15 +2,17 @@
 {clamp, is-equal-to-object} = require \prelude-extension
 {DOM:{div, input, span}, create-class, create-factory}:React = require \react
 {find-DOM-node} = require \react-dom
-ReactCSSTransitionGroup = create-factory require \react-addons-css-transition-group
+# ReactCSSTransitionGroup = create-factory require \react-addons-css-transition-group
+ReactMotion = require \react-motion
+Transition = create-factory require \react-motion-ui-pack
 
 # cancel-event :: Event -> Void
 cancel-event = (e) !->
     e.prevent-default!
     e.stop-propagation!
 
-# wrapper classes are used for optimizing performance 
-OptionWrapper = create-factory create-class do 
+# wrapper classes are used for optimizing performance
+OptionWrapper = create-factory create-class do
 
     # render :: a -> ReactElement
     render: ->
@@ -24,15 +26,15 @@ OptionWrapper = create-factory create-class do
 
     # should-component-update :: Props -> Boolean
     should-component-update: (next-props) ->
-        (!(next-props?.uid `is-equal-to-object` @props?.uid)) or 
-        (next-props?.highlight != @props?.highlight) or 
+        (!(next-props?.uid `is-equal-to-object` @props?.uid)) or
+        (next-props?.highlight != @props?.highlight) or
         (next-props?.selectable != @props?.selectable)
 
-ValueWrapper = create-factory create-class do 
+ValueWrapper = create-factory create-class do
 
     # render :: a -> ReactElement
     render: ->
-        div do 
+        div do
             class-name: \value-wrapper
             @props.render-item @props.item
 
@@ -54,7 +56,7 @@ module.exports = create-class do
     get-default-props: ->
         anchor: null
         # autosize :: InputElement -> Voud
-        autosize: ($search) !-> 
+        autosize: ($search) !->
 
             if $search.value.length == 0
                 $search.style.width = if !!$search?.current-style then \4px else \2px
@@ -70,7 +72,7 @@ module.exports = create-class do
                     $input = document.create-element \div
                         ..innerHTML = $search.value
 
-                    # copy all the styles of the search input 
+                    # copy all the styles of the search input
                     (if !!$search.current-style then $search.current-style else (document.default-view ? window .get-computed-style $search))
                         |> obj-to-pairs
                         |> each ([key, value]) -> $input.style[key] = value
@@ -102,23 +104,24 @@ module.exports = create-class do
         render-no-results-found: -> div class-name: \no-results-found, "No results found"
         # render-group-title :: Int -> Group -> ReactElement
         render-group-title: (index, {group-id, title}?) ->
-            div do 
+            div do
                 class-name: \simple-group-title
                 key: group-id
                 title
         # render-option :: Int -> Item -> ReactElement
         render-option: ({label, new-option, selectable}?) ->
             is-selectable = (typeof selectable == \undefined) or selectable
-            div do 
+            div do
                 class-name: "simple-option #{if is-selectable then '' else 'not-selectable'}"
                 span null, if !!new-option then "Add #{label} ..." else label
-        # render-value :: Int -> Item -> ReactElement        
+        # render-value :: Int -> Item -> ReactElement
         render-value: ({label}) ->
-            div do 
+            div do
                 class-name: \simple-value
                 span null, label
         # restore-on-backspace: ((value) -> ) # Item -> String
         search: ""
+        springParams: [170, 26]
         style: {}
         transition-enter: false
         transition-leave: false
@@ -129,46 +132,47 @@ module.exports = create-class do
 
     # render :: a -> ReactElement
     render: ->
-        anchor-index = 
+        console.log(ReactMotion)
+        anchor-index =
             | (typeof @props.anchor == \undefined) or @props.anchor == null => -1
-            | _ => (find-index (~> it `@is-equal-to-object` @props.anchor), @props.values) ? @props.values.length - 1        
+            | _ => (find-index (~> it `@is-equal-to-object` @props.anchor), @props.values) ? @props.values.length - 1
 
         # render-selected-values :: [Int] -> [ValueWrapper]
-        render-selected-values = ~> it |> map (index) ~> 
+        render-selected-values = ~> it |> map (index) ~>
             item = @props.values[index]
             uid = @props.uid item
 
-            ValueWrapper do 
+            ValueWrapper do
                 uid: uid
                 key: @uid-to-string uid
                 item: item
                 render-item: @props.render-value
 
         # REACT SELECTIZE
-        div do 
-            class-name: "react-selectize" + 
-                (if !!@props.class-name then " #{@props.class-name}" else "") + 
+        div do
+            class-name: "react-selectize" +
+                (if !!@props.class-name then " #{@props.class-name}" else "") +
                 "#{if @props.disabled then ' disabled' else ''}#{if @props.open then ' open' else ''}#{if @props.dropdown-direction == -1 then ' flipped' else ''}"
             style: @props.style
-            
+
             # CONTROL
-            div do 
+            div do
                 class-name: \control
                 ref: \control
                 on-click: ~>
                     <~ @props.on-anchor-change last @props.values
                     <~ @props.on-open-change true
                     @focus!
-                
+
                 # PLACEHOLDER TEXT
                 if @props.search.length == 0 and @props.values.length == 0
-                    div do 
+                    div do
                         class-name: \placeholder
                         @props.placeholder
 
                 # LIST OF SELECTED VALUES (BEFORE & INCLUDING THE ANCHOR)
                 render-selected-values [0 to anchor-index]
-                
+
                 # SEARCH INPUT BOX
                 input do
                     disabled: @props.disabled
@@ -177,8 +181,8 @@ module.exports = create-class do
                     value: @props.search
 
                     # update the search text & highlight the first option
-                    on-change: ({current-target:{value}}) ~> 
-                        @props.on-search-change value, ~> 
+                    on-change: ({current-target:{value}}) ~>
+                        @props.on-search-change value, ~>
                             @highlight-and-scroll-to-selectable-option (@props.first-option-index-to-highlight @props.options), 1
 
                     # show the list of options (noop if caused by invocation of @focus function)
@@ -198,8 +202,8 @@ module.exports = create-class do
                             @props.on-blur @props.values, \tab
 
                         # BACKSPACE
-                        | 8 => 
-                            
+                        | 8 =>
+
                             return if @props.search.length > 0 or anchor-index == -1
 
                             do ~>
@@ -219,18 +223,18 @@ module.exports = create-class do
                                             <~ @props.on-search-change @props.restore-on-backspace value-to-remove
                                             callback true
 
-                                        else 
+                                        else
                                             callback true
 
-                                    else 
+                                    else
                                         callback false
 
                                 if !!result
                                     @highlight-and-scroll-to-selectable-option (@props.first-option-index-to-highlight @props.options), 1
 
                                 # change the anchor iff the consumer removed the requested value & the predicted next-anchor is still present
-                                if !!result and 
-                                    anchor-index == anchor-index-on-remove and 
+                                if !!result and
+                                    anchor-index == anchor-index-on-remove and
                                     ((typeof next-anchor == \undefined) or !!(find (~> it `@is-equal-to-object` next-anchor), @props.values))
                                         <~ @props.on-anchor-change next-anchor
 
@@ -244,7 +248,7 @@ module.exports = create-class do
                             @focus!
 
                         if @props.search.length == 0
-                            
+
                             switch e.which
 
                             # LEFT ARROW
@@ -261,7 +265,7 @@ module.exports = create-class do
 
                         # no need to process or block any keys if we ran out of options
                         return if @props.options.length == 0
-                            
+
                         # ENTER
                         if e.which == 13 and @props.open
                             @select-highlighted-uid anchor-index
@@ -271,7 +275,7 @@ module.exports = create-class do
 
                             # wrap around upon hitting the boundary
                             # UP ARROW
-                            | 38 => 
+                            | 38 =>
                                 @scroll-lock = true
                                 index = -1 + @option-index-from-uid @props.highlighted-uid
                                 result <~ @highlight-and-scroll-to-selectable-option index, -1
@@ -279,7 +283,7 @@ module.exports = create-class do
                                     @highlight-and-scroll-to-selectable-option (@props.options.length - 1), -1
 
                             # DOWN ARROW
-                            | 40 => 
+                            | 40 =>
                                 @scroll-lock = true
                                 index = 1 + @option-index-from-uid @props.highlighted-uid
                                 result <~ @highlight-and-scroll-to-selectable-option index, 1
@@ -290,12 +294,12 @@ module.exports = create-class do
                             | _ => return
 
                         cancel-event e
-                
+
                 # LIST OF SELECTED VALUES (AFTER THE ANCHOR)
                 render-selected-values [anchor-index + 1 til @props.values.length]
-                 
+
                 # RESET BUTTON
-                div do 
+                div do
                     class-name: \reset
                     on-click: (e) ~>
                         do ~>
@@ -305,11 +309,11 @@ module.exports = create-class do
                         cancel-event e
                     \×
 
-                # ARROW ICON 
-                div do 
+                # ARROW ICON
+                div do
                     class-name: \arrow
                     on-click: (e) ~>
-                        if @props.open 
+                        if @props.open
                             @props.on-open-change false
                             @props.on-blur @props.values, \arrow-click
                         else
@@ -318,25 +322,28 @@ module.exports = create-class do
                             @focus!
                         cancel-event e
 
-            # DROPDOWN                            
-            ReactCSSTransitionGroup do 
+            # DROPDOWN
+            Transition do
                 component: \div
-                transition-name: \slide 
-                transition-enter: @props.transition-enter
-                transition-leave: @props.transition-leave
-                transition-enter-timeout: @props.transition-enter-timeout
-                transition-leave-timeout: @props.transition-leave-timeout
+                enter: {
+                    height: ReactMotion.spring('auto',@props.springParams),
+                    opacity: 1
+                }
+                leave: {
+                    height: ReactMotion.spring(0,@props.springParams),
+                    opacity: 0
+                }
                 class-name: \dropdown-transition
                 ref: \dropdown-transition
                 if @props.open
-                    
+
                     # render-options :: [Item] -> Int -> [ReactEleent]
                     render-options = (options) ~>
                         [0 til options.length] |> map (index) ~>
                             option = options[index]
                             uid = @props.uid option
 
-                            # OPTION WRAPPER 
+                            # OPTION WRAPPER
                             OptionWrapper do
                                 {
                                     uid
@@ -347,33 +354,33 @@ module.exports = create-class do
                                     on-mouse-move: ({current-target}) !~> @scroll-lock = false if @scroll-lock
                                     on-mouse-out: !~> @props.on-highlighted-uid-change undefined if !@scroll-lock
                                     render-item: @props.render-option
-                                } <<< 
-                                    switch 
+                                } <<<
+                                    switch
                                     | (typeof option?.selectable == \boolean) and !option.selectable => on-click: cancel-event
-                                    | _ => 
+                                    | _ =>
                                         on-click: (e) !~> @select-highlighted-uid anchor-index
                                         on-mouse-over: ({current-target}) !~>  @props.on-highlighted-uid-change uid if !@scroll-lock
 
-                    div do 
+                    div do
                         class-name: \dropdown
                         key: \dropdown
                         ref: \dropdown
 
-                        # NO RESULT FOUND   
+                        # NO RESULT FOUND
                         if @props.options.length == 0
                             @props.render-no-results-found!
-                        
+
                         else if @props?.groups?.length > 0
 
                             # convert [Group] to [{index: Int, group: Group, options: [Item]}]
-                            groups = [0 til @props.groups.length] |> map (index) ~>  
+                            groups = [0 til @props.groups.length] |> map (index) ~>
                                 {group-id}:group = @props.groups[index]
                                 options = @props.options |> filter ~> (@props.group-id it) == group-id
                                 {index, group, options}
 
                             # GROUPS
                             div class-name: "groups #{if !!@props.groups-as-columns then 'as-columns' else ''}",
-                                groups 
+                                groups
                                     |> filter (.options.length > 0)
                                     |> map ({index, {group-id}:group, options}) ~>
 
@@ -410,7 +417,7 @@ module.exports = create-class do
             @highlight-and-scroll-to-selectable-option (@props.first-option-index-to-highlight @props.options), 1
             @focus!
 
-        # if the list of options was closed then reset highlighted-uid 
+        # if the list of options was closed then reset highlighted-uid
         @props.on-highlighted-uid-change undefined if !@props.open and prev-props.open
 
         # autosize the search input to its contents
@@ -420,12 +427,12 @@ module.exports = create-class do
 
         $dropdown-transition = find-DOM-node @refs[\dropdown-transition]
 
-        if !!@refs.dropdown
-            $dropdown-transition.style <<< 
-                bottom: if @props.dropdown-direction == -1 then (find-DOM-node @refs.control).offset-height else ""
-                height: "#{@refs.dropdown.offset-height}px"
-        else 
-            $dropdown-transition.style.height = \0px
+        #if !!@refs.dropdown
+        #    $dropdown-transition.style <<<
+        #        bottom: if @props.dropdown-direction == -1 then (find-DOM-node @refs.control).offset-height else ""
+        #        height: "#{@refs.dropdown.offset-height}px"
+        #else
+        #    $dropdown-transition.style.height = \0px
 
     # component-will-receive-props :: Props -> Void
     component-will-receive-props: (props) !->
@@ -436,7 +443,7 @@ module.exports = create-class do
     option-index-from-uid: (uid) -> @props.options |> find-index ~> uid `is-equal-to-object` @props.uid it
 
     # blur :: a -> Void
-    blur: !-> 
+    blur: !->
         (find-DOM-node @refs.search).blur!
         @props.on-blur @props.values, \blur
 
@@ -490,7 +497,7 @@ module.exports = create-class do
     # select-highlighted-uid :: Int -> Void
     select-highlighted-uid: (anchor-index) !->
         return if @props.highlighted-uid == undefined
-        
+
         index = @option-index-from-uid @props.highlighted-uid
         return if typeof index != \number
 
@@ -498,22 +505,22 @@ module.exports = create-class do
 
         # values = (values behind & including the anchor) + highlighted option + (values ahead of the anchor)
         <~ @props.on-values-change do
-            (map (~> @props.values[it]), [0 to anchor-index]) ++ 
-            [option] ++ 
+            (map (~> @props.values[it]), [0 to anchor-index]) ++
+            [option] ++
             (map (~> @props.values[it]), [anchor-index + 1 til @props.values.length])
 
         value = find (~> it `@is-equal-to-object` option), @props.values
         return if !value
-        
+
         # if the consumer did what we asked, then clear the search and move the anchor ahead of the selected value
         <~ @props.on-search-change ""
         <~ @props.on-anchor-change value
         return if !@props.open
-        
+
         # highlight the next selectable option
         result <~ @highlight-and-scroll-to-selectable-option index, 1
         return if !!result
-        
+
         # if there are no highlightable/selectable options left (then close the dropdown)
         result <~ @highlight-and-scroll-to-selectable-option (@props.first-option-index-to-highlight @props.options), 1
         (@props.on-open-change false, ~>) if !result
