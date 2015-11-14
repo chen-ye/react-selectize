@@ -73,3 +73,9 @@
 
 ## v0.3.5 / 16th October 2015
 * improved the default auto-size implementation
+
+## v0.3.6 / 30th October 2015
+* updated package.json to include (React 0.14.0 and above) thanks @HankMcCoy
+
+## v0.3.7 / 2nd November 2015
+* call `on-blur` only if the dropdown is open, thanks @alurim 

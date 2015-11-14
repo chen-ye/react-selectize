@@ -9,7 +9,7 @@ cancel-event = (e) !->
     e.prevent-default!
     e.stop-propagation!
 
-# wrapper classes are used for optimizing performance
+# wrapper classes are used for optimizing performance 
 OptionWrapper = create-factory create-class do 
 
     # render :: a -> ReactElement
@@ -74,7 +74,7 @@ module.exports = create-class do
                     (if !!$search.current-style then $search.current-style else (document.default-view ? window .get-computed-style $search))
                         |> obj-to-pairs
                         |> each ([key, value]) -> $input.style[key] = value
-                        |> -> $input.style.width = ""
+                        |> -> $input.style <<< display: \inline-block, width: ""
 
                     # add a new input element to document.body and measure the text width
                     document.body.append-child $input
@@ -331,7 +331,7 @@ module.exports = create-class do
                 if @props.open
                     
                     # render-options :: [Item] -> Int -> [ReactEleent]
-                    render-options = (options, index-offset) ~>
+                    render-options = (options) ~>
                         [0 til options.length] |> map (index) ~>
                             option = options[index]
                             uid = @props.uid option
@@ -376,16 +376,14 @@ module.exports = create-class do
                                 groups 
                                     |> filter (.options.length > 0)
                                     |> map ({index, {group-id}:group, options}) ~>
-                                        offset = [0 til index]
-                                            |> map -> groups[it].options.length
-                                            |> sum
+
+                                        # GROUP
                                         div key: group-id,
                                             @props.render-group-title index, group, options
-                                            div class-name: \options,
-                                                render-options options, offset
+                                            div class-name: \options, (render-options options)
 
                         else
-                            render-options @props.options, 0
+                            render-options @props.options
 
     # component-did-mount :: a -> Void
     component-did-mount: !->
@@ -395,7 +393,7 @@ module.exports = create-class do
                 return false if (typeof element == \undefined) or element == null
                 return true if element == root-node
                 dom-node-contains element.parent-element
-            if !(dom-node-contains target)
+            if !(dom-node-contains target) and @props.open
                 @props.on-open-change false
                 @props.on-blur @props.values, \click
         document.add-event-listener \click, @external-click-listener, true
