@@ -138,7 +138,6 @@
     },
     render: function(){
       var anchorIndex, renderSelectedValues, renderOptions, ref$, ref1$, groups, this$ = this;
-      console.log(ReactMotion);
       anchorIndex = (function(){
         var ref$;
         switch (false) {

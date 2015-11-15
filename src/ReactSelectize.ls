@@ -132,7 +132,6 @@ module.exports = create-class do
 
     # render :: a -> ReactElement
     render: ->
-        console.log(ReactMotion)
         anchor-index =
             | (typeof @props.anchor == \undefined) or @props.anchor == null => -1
             | _ => (find-index (~> it `@is-equal-to-object` @props.anchor), @props.values) ? @props.values.length - 1
